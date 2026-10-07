@@ -1,0 +1,35 @@
+{
+  "expo": {
+    "name": "Menú en pareja",
+    "slug": "menu-en-pareja",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "menuenpareja",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "es.nacho.menuenpareja"
+    },
+    "android": {
+      "package": "es.nacho.menuenpareja",
+      "adaptiveIcon": {
+        "backgroundColor": "#245b43",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "name": "Menú en pareja",
+      "shortName": "Menú",
+      "themeColor": "#254c3b",
+      "backgroundColor": "#fbf8f0",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": ["expo-secure-store"]
+  }
+}
