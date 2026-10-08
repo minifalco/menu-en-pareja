@@ -2,19 +2,17 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
-import { parseIngredients } from '../src/domain/ingredients';
+import { buildManualItem } from '../src/domain/shopping';
 
 test('manual form preserves hyphens, commas and digits in the name independently of amount', () => {
-  const app = readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
-  const code = app.match(/    const parsed = [^\n]+\n    const item: ManualShoppingItem = ([^\n]+)/);
-  assert.ok(code);
-  const generate = new Function('parseIngredients', 'makeId', 'manualName', 'manualAmount', code[0].replace(': ManualShoppingItem', '') + '\nreturn item;');
   for (const name of ['ui-e74efee8-ab43-4f1f-ae5c-32b38dad5906-manual', 'Vitamina-12', 'Leche, 2%']) {
-    const item = generate(parseIngredients, randomUUID, name, '2 ud');
+    const item = buildManualItem(name, '2 ud', randomUUID());
     assert.equal(item.name, name);
     assert.equal(item.quantity, 2);
     assert.equal(item.unit, 'ud');
+    assert.equal(item.checked, false);
   }
+  assert.deepEqual(buildManualItem('  Pan ', '', 'id-1'), { name: 'Pan', id: 'id-1', checked: false });
 });
 import * as cloudState from '../src/domain/cloudState';
 
@@ -81,8 +79,7 @@ test('checkbox failure waits for partial writes and refetches authoritative stat
 });
 
 test('all generated IDs are RFC4122 v4 UUIDs accepted by cloud UUID columns', () => {
-  const app = readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
-  const helper = app.includes("./src/domain/ids") ? readFileSync(new URL('../src/domain/ids.ts', import.meta.url), 'utf8') : app;
+  const helper = readFileSync(new URL('../src/domain/ids.ts', import.meta.url), 'utf8');
   const expression = helper.match(/(?:const makeId =|return)\s*(.+?);/g)?.find(line => line.includes('randomUUID') || line.includes('Date.now'));
   assert.ok(expression);
   const body = expression.replace(/^const makeId = \(\) => /, 'return ');

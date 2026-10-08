@@ -11,6 +11,13 @@ export function parseIngredients(input: string): Ingredient[] {
   });
 }
 
+// Texto editable de una fila de ingrediente: «Arroz — 200 g».
+export function ingredientText(ingredient: Ingredient): string {
+  return ingredient.quantity === undefined
+    ? ingredient.name
+    : `${ingredient.name} — ${ingredient.quantity}${ingredient.unit ? ` ${ingredient.unit}` : ''}`;
+}
+
 export function formatIngredient(ingredient: Ingredient): string {
   const amount = ingredient.quantity === undefined
     ? ''

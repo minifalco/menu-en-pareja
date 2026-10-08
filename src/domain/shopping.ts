@@ -1,6 +1,13 @@
 import type { Ingredient, ManualShoppingItem, PlannedMeal, ShoppingItem } from './types';
+import { parseIngredients } from './ingredients';
 
 const clean = (value: string | undefined): string => (value ?? '').trim();
+
+// The amount is parsed on its own so hyphens, commas and digits in the name survive.
+export function buildManualItem(name: string, amount: string, id: string): ManualShoppingItem {
+  const parsed = parseIngredients(`Artículo${amount.trim() ? ` — ${amount.trim()}` : ''}`)[0];
+  return { ...parsed, name: name.trim(), id, checked: false };
+}
 
 export function shoppingKey(name: string, unit?: string): string {
   const normalizedName = clean(name).toLocaleLowerCase('es').normalize('NFC');
