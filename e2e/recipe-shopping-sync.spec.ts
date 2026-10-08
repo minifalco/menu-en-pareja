@@ -42,6 +42,8 @@ test('editing a planned recipe updates menu and aggregated shopping together wit
 test('editing also repairs legacy local menus in an unopened week before a rename', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Crear primer plato' }).waitFor();
+  // The app saves its empty initial state once after loading; seed only after that write.
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('menu-pareja:local:recipes'))).not.toBeNull();
   await page.evaluate(() => {
     const date = new Date(); date.setDate(date.getDate() - (date.getDay() + 6) % 7 + 7);
     const week = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
