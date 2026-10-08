@@ -1,9 +1,9 @@
 import base from './playwright.config';
 import { defineConfig } from '@playwright/test';
 
-// Isolated UI fixtures only: never contacts the configured household backend.
+// Supabase simulado con page.route: nunca contacta con un backend real.
 export default defineConfig(base, {
-  testMatch: '**/auth-keyboard.spec.ts',
+  testMatch: ['**/auth-keyboard.spec.ts', '**/account.spec.ts', '**/shopping-interaction.spec.ts'],
   testIgnore: [],
   use: { ...base.use, baseURL: 'http://127.0.0.1:8922' },
   webServer: {
