@@ -1,10 +1,12 @@
-# iHambre · Confirmación de correo
+# iHambre · Web de ihambre.top
 
-Landing estática local y plantilla de email preparada. **Estos cambios no se han desplegado, no se ha cambiado el panel de Supabase y no se ha modificado `App.tsx`.** No se han usado ni modificado cuentas reales.
+Páginas estáticas de la raíz de ihambre.top (rama `gh-pages`): confirmación de correo (`index.html`) y política de privacidad (`privacidad.html`, con la sección `#borrar-cuenta` que pide Google Play). Plantillas de correo en `email/`.
+
+**Antes de publicar `privacidad.html`, rellenar los campos marcados entre corchetes** (responsable y correo de contacto).
 
 ## Archivos y publicación aislada
 
-Publicar únicamente `index.html`, `styles.css` y `logo.png`, juntos en la raíz de la web. No publicar `email/`, `tests/`, sus logs/capturas ni los README. Los archivos existentes de configuración del hosting (`CNAME`, `.nojekyll`) se gestionan por separado. No requiere build, claves, librerías ni fuentes remotas.
+Publicar únicamente `index.html`, `privacidad.html`, `styles.css` y `logo.png`, juntos en la raíz de la web. No publicar `email/`, `tests/`, sus logs/capturas ni los README. Los archivos existentes de configuración del hosting (`CNAME`, `.nojekyll`) se gestionan por separado. No requiere build, claves, librerías ni fuentes remotas.
 
 `logo.png` es una copia exacta del icono suministrado en `assets/icon.png`, inspeccionado visualmente. Colores: verde vegetal `#356e2a`, naranja cesta `#ee5523`, marrón cálido `#492f23` y fondo crema `#faf7ef`. El email comparte esta paleta; su botón es verde oscuro con texto blanco para mantener contraste.
 

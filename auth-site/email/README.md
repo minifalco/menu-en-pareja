@@ -1,9 +1,15 @@
-# Plantilla de registro · iHambre
+# Plantillas de correo · iHambre
 
-Archivos para **Confirm signup**, no para publicar en la web:
+Se pegan en Supabase → Authentication → Emails → Templates. No se publican en la web.
 
-- `subject.txt`: asunto en español.
-- `signup.html`: HTML con tablas de presentación y estilos inline; sin JavaScript, CSS externo ni fuentes remotas.
+| Plantilla de Supabase | Asunto | Cuerpo |
+|---|---|---|
+| **Confirm signup** | `subject.txt` | `signup.html` |
+| **Reset password** | `recovery-subject.txt` | `recovery.html` |
+
+**Reset password es obligatoria para recuperar la contraseña desde la app:** la app pide el código de 6 cifras (`{{ .Token }}`) y no usa el enlace por defecto de Supabase. Instálala en producción y en staging; si se cambia la duración o la longitud del código en Supabase (Auth → Providers → Email), la app acepta entre 6 y 10 cifras.
+
+HTML con tablas de presentación y estilos inline; sin JavaScript, CSS externo ni fuentes remotas.
 
 No se ha guardado esta plantilla en el panel, enviado un correo ni desplegado estos cambios. Solo se prepararon y probaron archivos locales.
 
