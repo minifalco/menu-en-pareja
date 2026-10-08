@@ -1,4 +1,4 @@
-# Menú en pareja
+# iHambre · Menú y compra compartida
 
 App de planificación semanal y lista de la compra compartida entre Android y iPhone. UI en español, móvil primero.
 
@@ -60,4 +60,19 @@ El proyecto exporta una web instalable (PWA) para Safari; no requiere compilar u
 - Flujo de navegador: `npm run e2e` prueba guardar un plato, planificarlo, generar/ marcar ingredientes y conservar cambios al recargar.
 - `npm run typecheck` revisa los tipos.
 - APK release compilado en Ubuntu con SDK/Gradle.
-- No se ha probado sincronización real de dos cuentas ni publicado el frontend: eso requiere crear/configurar el proyecto Supabase y desplegar la PWA.
+- Sincronización real comprobada: 12/12 pruebas de interfaz con dos clientes independientes contra Supabase; 37 pruebas del backend pasan, con 3 bloqueos de registro público por SMTP.
+- Teclado Android comprobado con Gboard en emulador: campo y botones accesibles mediante scroll sin cerrar el teclado. Receta y compra se ejercitaron en una compilación local aislada; no equivalen a sesión nativa autenticada.
+- Estética de cuaderno, fuente Patrick Hand local y logo proporcionado.
+- Corregidos UUID de menús/artículos, duplicados por realtime, respuestas antiguas entre semanas y recuperación de casillas tras fallo de red.
+
+### Registro y correo: verificación del 7 de octubre
+
+La confirmación de email sigue obligatoria. SMTP personalizado de Resend está habilitado y se leyó de nuevo en el panel: `smtp.resend.com:465`, usuario `resend`, remitente `cuentas@ihambre.top` / `iHambre`. Site URL y la única Redirect URL se guardaron como `https://ihambre.top/`.
+
+Se ejercitó un registro público desde la UI real con una cuenta desechable: cuenta sin confirmar y sin sesión, rechazo del login previo y correo recibido realmente en Gmail. **El correo llegó a spam**, con SPF y DKIM válidos. Se corrigió con prueba RED→GREEN que el alta especifique el destino HTTPS; sin ello el email tomaba el origen de la web de desarrollo. El APK actualizado conserva paquete y certificado de firma y se instaló/lanzó en el emulador.
+
+**Bloqueo pendiente:** GitHub Pages aún presenta un certificado que no corresponde a `ihambre.top`. No se ignoró TLS, no se consumió el enlace ni se dio por probado confirmación→login. `https_enforced` no se activó sin certificado válido. La cuenta de prueba se eliminó y la auditoría final encontró 0 cuentas restantes. Véanse `supabase/public-signup-20261007.json`, `supabase/auth-web-20261007.json` y `supabase/CRON-20261007.md`. Las pruebas anteriores confirmadas administrativamente siguen siendo evidencia de sync/RLS, no de entrega de email.
+
+### Alcance de entrega
+
+APK firmado con la clave Android de desarrollo existente, no destinado a Google Play. iPhone queda pendiente de la siguiente fase. Persisten avisos de npm audit en dependencias de herramientas; no se forzó una degradación incompatible de Expo para ocultarlos.
