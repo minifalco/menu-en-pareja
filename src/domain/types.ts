@@ -8,6 +8,7 @@ export interface Ingredient {
 
 export interface PlannedMeal {
   id: string;
+  recipeId?: string;
   title: string;
   day: string;
   slot: MealSlot;

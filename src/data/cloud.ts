@@ -4,6 +4,8 @@ import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import { createClient } from '@supabase/supabase-js';
 import type { Ingredient, ManualShoppingItem, PlannedMeal } from '../domain/types';
+import { syncPlannedRecipes } from '../domain/recipes';
+export { subscribeHouseholdChanges } from './householdRealtime';
 
 const authStorage = Platform.OS === 'web' ? AsyncStorage : {
   getItem: (key: string) => SecureStore.getItemAsync(key),
@@ -53,7 +55,7 @@ export async function loadWeek(householdId: string, weekStart: string): Promise<
   if (!supabase) return emptyWeek();
   const [recipesRes, mealsRes, checksRes, manualRes] = await Promise.all([
     supabase.from('recipes').select('id,title,ingredients,note').eq('household_id', householdId).order('title'),
-    supabase.from('planned_meals').select('id,title,day_date,slot,ingredients').eq('household_id', householdId).eq('week_start', weekStart),
+    supabase.from('planned_meals').select('id,recipe_id,title,day_date,slot,ingredients').eq('household_id', householdId).eq('week_start', weekStart),
     supabase.from('shopping_checks').select('item_key,checked').eq('household_id', householdId).eq('week_start', weekStart),
     supabase.from('manual_shopping_items').select('id,name,quantity,unit,checked').eq('household_id', householdId).eq('week_start', weekStart),
   ]);
@@ -62,7 +64,7 @@ export async function loadWeek(householdId: string, weekStart: string): Promise<
   for (const row of checksRes.data ?? []) checks[row.item_key] = row.checked;
   return {
     recipes: (recipesRes.data ?? []) as Recipe[],
-    meals: (mealsRes.data ?? []).map(row => ({ id: row.id, title: row.title, day: row.day_date, slot: row.slot, ingredients: row.ingredients })) as PlannedMeal[],
+    meals: (mealsRes.data ?? []).map(row => ({ id: row.id, recipeId: row.recipe_id ?? undefined, title: row.title, day: row.day_date, slot: row.slot, ingredients: row.ingredients })) as PlannedMeal[],
     checks,
     manualItems: (manualRes.data ?? []).map(row => ({ id: row.id, name: row.name, quantity: row.quantity ?? undefined, unit: row.unit ?? undefined, checked: row.checked })) as ManualShoppingItem[],
   };
@@ -100,9 +102,15 @@ export async function addRecipe(householdId: string, recipe: Omit<Recipe, 'id'>)
   return data as Recipe;
 }
 
+export async function updateRecipe(householdId: string, id: string, recipe: Omit<Recipe, 'id'>): Promise<Recipe> {
+  const { data, error } = await supabase!.from('recipes').update(recipe).eq('household_id', householdId).eq('id', id).select('id,title,ingredients,note').single();
+  if (error) throw error;
+  return data as Recipe;
+}
+
 export async function addMeal(householdId: string, weekStart: string, meal: PlannedMeal): Promise<void> {
   const { error } = await supabase!.from('planned_meals').insert({
-    id: meal.id, household_id: householdId, week_start: weekStart,
+    id: meal.id, recipe_id: meal.recipeId ?? null, household_id: householdId, week_start: weekStart,
     day_date: meal.day, slot: meal.slot, title: meal.title, ingredients: meal.ingredients,
   });
   if (error) throw error;
@@ -134,6 +142,21 @@ export async function setManualChecked(householdId: string, id: string, checked:
 export async function removeManualItem(householdId: string, id: string): Promise<void> {
   const { error } = await supabase!.from('manual_shopping_items').delete().eq('household_id', householdId).eq('id', id);
   if (error) throw error;
+}
+
+// Update every local week in one storage batch, binding legacy titles BEFORE
+// a rename. Preserve unrelated menus, checks and manually added shopping items.
+export async function updateLocalRecipePlans(saved: Recipe, previous: Recipe[]): Promise<void> {
+  const recipes = [...previous.filter(recipe => recipe.id !== saved.id), saved];
+  const keys = (await AsyncStorage.getAllKeys()).filter(key => /^menu-pareja:local:\d{4}-\d{2}-\d{2}$/.test(key));
+  const entries = await AsyncStorage.multiGet(keys);
+  const writes: [string, string][] = entries.flatMap(([key, value]) => {
+    if (!value) return [];
+    const week = JSON.parse(value) as WeekData;
+    return [[key, JSON.stringify({ ...week, recipes, meals: syncPlannedRecipes(syncPlannedRecipes(week.meals, previous), recipes) })]];
+  });
+  writes.push(['menu-pareja:local:recipes', JSON.stringify(recipes)]);
+  await AsyncStorage.multiSet(writes);
 }
 
 export async function saveLocal(key: string, data: unknown): Promise<void> {

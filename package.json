@@ -7,13 +7,17 @@
     "@react-native-async-storage/async-storage": "2.2.0",
     "@supabase/supabase-js": "^2.117.2",
     "expo": "~57.0.27",
+    "expo-crypto": "~57.0.3",
+    "expo-font": "~57.0.4",
     "expo-secure-store": "~57.0.4",
+    "expo-splash-screen": "~57.0.9",
     "expo-status-bar": "~57.0.1",
     "expo-system-ui": "~57.0.4",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-native": "0.86.3",
     "react-native-safe-area-context": "~5.7.0",
+    "react-native-svg": "15.15.4",
     "react-native-url-polyfill": "^4.0.0",
     "react-native-web": "^0.21.2"
   },
@@ -21,6 +25,8 @@
     "@playwright/test": "^1.63.0",
     "@types/node": "^26.6.4",
     "@types/react": "~19.2.2",
+    "eslint": "^9.0.0",
+    "eslint-config-expo": "~57.0.2",
     "tsx": "^4.23.15",
     "typescript": "~6.0.3"
   },
@@ -30,9 +36,10 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "test": "tsx --test tests/*.test.ts",
-    "e2e": "playwright test",
+    "e2e": "EXPO_PUBLIC_SUPABASE_URL= EXPO_PUBLIC_SUPABASE_ANON_KEY= playwright test",
     "typecheck": "tsc --noEmit",
-    "export:web": "expo export --platform web && node scripts/prepare-web.mjs"
+    "export:web": "expo export --platform web && node scripts/prepare-web.mjs",
+    "lint": "expo lint"
   },
   "private": true
 }

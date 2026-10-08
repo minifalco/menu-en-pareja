@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Menú en pareja",
+    "name": "iHambre",
     "slug": "menu-en-pareja",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -14,22 +14,27 @@
     "android": {
       "package": "es.nacho.menuenpareja",
       "adaptiveIcon": {
-        "backgroundColor": "#245b43",
+        "backgroundColor": "#fbf8f0",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "softwareKeyboardLayoutMode": "resize"
     },
     "web": {
       "bundler": "metro",
       "output": "single",
-      "name": "Menú en pareja",
-      "shortName": "Menú",
+      "name": "iHambre",
+      "shortName": "iHambre",
       "themeColor": "#254c3b",
       "backgroundColor": "#fbf8f0",
       "favicon": "./assets/favicon.png"
     },
-    "plugins": ["expo-secure-store"]
+    "plugins": [
+      "expo-secure-store",
+      "expo-font",
+      ["expo-splash-screen", { "image": "./assets/splash-icon.png", "imageWidth": 200, "resizeMode": "contain", "backgroundColor": "#fbf8f0" }]
+    ]
   }
 }
