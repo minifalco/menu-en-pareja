@@ -7,19 +7,20 @@ App para planificar la comida y la cena de la semana en pareja y hacer la compra
 - **Platos:** colección compartida de recetas con ingredientes y cantidades opcionales (`Arroz — 200 g`).
 - **Semana:** planificador de lunes a domingo, comida y cena.
 - **Compra:** se calcula sola a partir de los platos de la semana. Junta ingredientes iguales y suma cantidades con la misma unidad; al quitar un plato desaparece lo que ya no hace falta. Se pueden añadir artículos a mano.
-- **Casa compartida:** cada persona tiene su cuenta; una crea la casa y comparte un código de invitación de 8 caracteres. Las casillas de la compra se sincronizan en tiempo real.
+- **Casa compartida:** cada persona tiene su cuenta; una crea la casa y comparte un código de invitación de 8 caracteres. Las casillas de la compra se sincronizan en tiempo real. Quien crea la casa puede quitar miembros y cambiar el código; cualquiera puede salir.
+- **Cuenta:** recuperar la contraseña con un código por correo, cambiarla, consultar la política de privacidad y borrar la cuenta desde la app.
 - **Modo local:** sin Supabase configurado, funciona solo en el dispositivo.
 
 ## Arrancar en local
 
 ```bash
 npm install
-cp .env.example .env   # rellenar con la URL y la clave pública de Supabase
+cp .env.example .env   # URL y clave pública del Supabase de PRUEBAS (staging)
 npm run web            # navegador
 npx expo start         # móvil, con Expo Go
 ```
 
-Sin `.env` la app arranca en modo local.
+Sin `.env` la app arranca en modo local. Los valores de producción van en `.env.production` (ver `.env.example`).
 
 ## Comandos
 
@@ -28,7 +29,8 @@ Sin `.env` la app arranca en modo local.
 | `npm run check` | Typecheck + lint + tests unitarios |
 | `npm run e2e` | Tests de navegador en modo local |
 | `npm run e2e:fixtures` | Tests de navegador con Supabase simulado |
-| `npm run export:web` | Genera la web/PWA en `dist/` |
+| `npm run e2e:export` | Exporta la web y repite los tests sobre ella |
+| `npm run export:web` | Genera la web/PWA de producción en `dist/` |
 
 ## Estructura
 
@@ -36,9 +38,14 @@ Ver el mapa del código en [`AGENTS.md`](AGENTS.md). Cómo se trabaja con agente
 
 ## Supabase
 
-La app lleva solo la clave pública (publishable/anon); los datos los protegen las políticas RLS de `supabase/schema.sql`, que limitan cada tabla a los miembros de la casa. La clave `service_role` nunca va en la app ni en el repositorio.
+Hay dos proyectos: **producción** (`ihambre`, datos reales) y **staging** (`ihambre-staging`, pruebas). Todo cambio se prueba primero en staging.
 
-Para un proyecto nuevo: ejecutar `supabase/schema.sql` completo en el SQL Editor, dejar activado Email/Password con confirmación de correo y rellenar `.env`. El plan gratuito se pausa tras una semana sin uso y no tiene copias de seguridad automáticas.
+La app lleva solo la clave pública (publishable/anon); los datos los protegen las políticas RLS, que limitan cada tabla a los miembros de la casa. La clave `service_role` nunca va en la app ni en el repositorio.
+
+- **Esquema:** los ficheros de `supabase/migrations/`, aplicados en orden, crean la base de datos completa. Para un proyecto nuevo, ejecutarlos en orden en el SQL Editor.
+- **Pruebas:** `supabase/tests/*.sql` se ejecutan en staging y se deshacen solas; terminan con el mensaje `TODAS LAS PRUEBAS OK`.
+- **Auth:** Email/Password con confirmación de correo. Plantillas de correo (registro y recuperar contraseña) en `auth-site/email/`; la de recuperar contraseña es obligatoria para que funcione desde la app.
+- El plan gratuito se pausa tras una semana sin uso y no tiene copias de seguridad automáticas.
 
 ## Android
 
@@ -67,8 +74,8 @@ Cada push a cualquier rama ejecuta los tests en GitHub Actions (`.github/workflo
 
 | Ruta | Contenido |
 |---|---|
-| `/` | Página de confirmación de correo: `index.html`, `styles.css` y `logo.png` de `auth-site/`, más `CNAME` y `.nojekyll` |
+| `/` | Confirmación de correo y política de privacidad: `index.html`, `privacidad.html`, `styles.css` y `logo.png` de `auth-site/`, más `CNAME` y `.nojekyll` |
 | `/app/` | La app web (PWA) |
 | `/404.html` | Copia de la app, para que recargar una pestaña (`/app/compra`) funcione |
 
-Publicar es manual: con el `.env` de producción, `PAGES_BASE_PATH=/app npm run export:web`; después copiar `dist/` a `app/` y `dist/404.html` a la raíz de la rama `gh-pages`. Para probar el resultado en local: `node scripts/serve-dist.mjs 8945 /app` y abrir `http://127.0.0.1:8945/app/`.
+Publicar es manual: `PAGES_BASE_PATH=/app npm run export:web` (toma los valores de `.env.production`); después copiar `dist/` a `app/` y `dist/404.html` a la raíz de la rama `gh-pages`. Para probar el resultado en local: `node scripts/serve-dist.mjs 8945 /app` y abrir `http://127.0.0.1:8945/app/`.

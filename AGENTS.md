@@ -24,10 +24,12 @@ El dueño del proyecto lo dirige pero no es programador profesional.
 | `src/domain/` | Lógica pura, sin React ni red: fechas, formato, ingredientes, agregación de la compra. Tests en `tests/` |
 | `src/data/` | Acceso a Supabase, caché local (`cloud.ts`) y realtime |
 | `src/theme.ts` | Colores y estilos compartidos; los estilos propios de una pantalla van en su fichero |
-| `supabase/` | Esquema de base de datos y migraciones |
+| `src/app/gestionar-casa.tsx`, `src/app/cuenta.tsx` | Miembros, código y salir de la casa; contraseña, privacidad y borrar cuenta |
+| `supabase/migrations/` | La base de datos entera, en orden: la única fuente de verdad del esquema |
+| `supabase/tests/` | Pruebas SQL que se ejecutan en staging y se deshacen solas |
 | `e2e/` | Tests de navegador (Playwright) |
-| `auth-site/` | Web estática de ihambre.top (confirmación de correo) |
-| `scripts/` | Export web y verificaciones contra Supabase real / emulador Android |
+| `auth-site/` | Web estática de ihambre.top: confirmación de correo, privacidad y plantillas de email |
+| `scripts/` | Export web; los `verify-*` son verificaciones antiguas de Hermes contra producción (se niegan a correr con el `.env` de staging) |
 | `docs/` | Guía de trabajo para el dueño y planes de cada tarea |
 
 ## Comandos
@@ -46,7 +48,7 @@ npx expo-doctor             # diagnosticar dependencias y configuración
 
 ## Cuándo una tarea está terminada
 
-1. `npm run check`, `npm run e2e` y `npm run e2e:fixtures` en verde.
+1. `npm run check`, `npm run e2e` y `npm run e2e:fixtures` en verde (y `npm run e2e:export` si tocas la web exportada o la configuración).
 2. Si cambia algo que el usuario ve o hace, hay un test que lo cubre.
 3. Si cambia la base de datos, hay una migración nueva (nunca se edita una ya aplicada).
 4. Este fichero y el README siguen siendo verdad.
@@ -62,9 +64,21 @@ npx expo-doctor             # diagnosticar dependencias y configuración
 
 ## Supabase
 
-- **Producción** (proyecto `rfdpptoctjolnfiavtts`) tiene datos reales. No ejecutes SQL, migraciones ni scripts contra producción sin permiso explícito del dueño en esa misma conversación.
-- La app solo lleva la clave pública; la seguridad depende de RLS. Toda tabla nueva lleva RLS activado y políticas por pertenencia a la casa (`public.is_household_member`). Las funciones `security definer` fijan `search_path` y revocan `execute` a `public` y `anon`.
+| Proyecto | ID | Uso |
+|---|---|---|
+| `ihambre` | `rfdpptoctjolnfiavtts` | **Producción**, datos reales |
+| `ihambre-staging` | `abhoavkbxjbslnvviuhi` | Pruebas: aquí se prueba todo primero |
+
+- **Producción tiene datos reales.** No ejecutes SQL, migraciones ni scripts contra producción sin permiso explícito del dueño en esa misma conversación.
+- **Cambios de esquema:** nueva migración en `supabase/migrations/AAAAMMDDHHMMSS_nombre.sql` → aplicarla en staging → ejecutar las pruebas de `supabase/tests/` en staging → pedir permiso → aplicarla en producción. Las versiones registradas en ambos proyectos coinciden con el nombre del fichero.
+- La app solo lleva la clave pública; la seguridad depende de RLS. Toda tabla nueva lleva RLS activado y políticas por pertenencia a la casa (`public.is_household_member`). Las funciones `security definer` fijan `search_path = ''` y revocan `execute` a `public` y `anon`; las auxiliares van en el esquema `private`, que la API no expone.
 - La clave `service_role` jamás va en el cliente ni en ficheros del repo.
+
+## Variables de entorno
+
+- `.env` → **staging** (desarrollo y `npx expo start`); `.env.production` → **producción** (exportar la web y compilar). Ninguno va a git.
+- **No crees `.env.local` ni `.env.development`:** en desarrollo Expo los mete en la app por encima de las variables del sistema y los tests de navegador dejan de poder simular Supabase.
+- Metro guarda en caché el código ya compilado sin fijarse en las variables: `npm run export:web` usa `--clear` para no publicar una web con el Supabase equivocado. No lo quites.
 
 ## Expo cambia: no te fíes de tu memoria
 
