@@ -42,10 +42,10 @@
     "test": "tsx --test tests/*.test.ts",
     "e2e": "EXPO_PUBLIC_SUPABASE_URL= EXPO_PUBLIC_SUPABASE_ANON_KEY= playwright test",
     "e2e:fixtures": "playwright test --config playwright.fixtures.config.ts",
-    "e2e:export": "EXPO_PUBLIC_SUPABASE_URL= EXPO_PUBLIC_SUPABASE_ANON_KEY= npm run export:web && playwright test --config playwright.export.config.ts",
+    "e2e:export": "EXPO_NO_DOTENV=1 EXPO_PUBLIC_SUPABASE_URL= EXPO_PUBLIC_SUPABASE_ANON_KEY= npm run export:web && playwright test --config playwright.export.config.ts",
     "check": "npm run typecheck && npm run lint && npm test",
     "typecheck": "tsc --noEmit",
-    "export:web": "expo export --platform web && node scripts/prepare-web.mjs",
+    "export:web": "expo export --platform web --clear && node scripts/prepare-web.mjs",
     "lint": "expo lint"
   },
   "private": true

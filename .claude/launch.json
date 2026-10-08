@@ -6,6 +6,18 @@
       "runtimeExecutable": "env",
       "runtimeArgs": ["EXPO_PUBLIC_SUPABASE_URL=", "EXPO_PUBLIC_SUPABASE_ANON_KEY=", "npx", "expo", "start", "--web", "--port", "8931"],
       "port": 8931
+    },
+    {
+      "name": "auth-site",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "8933", "--bind", "127.0.0.1", "--directory", "auth-site"],
+      "port": 8933
+    },
+    {
+      "name": "web-staging",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["expo", "start", "--web", "--port", "8932"],
+      "port": 8932
     }
   ]
 }
