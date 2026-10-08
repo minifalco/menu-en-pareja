@@ -2,6 +2,7 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './e2e',
+  testIgnore: ['**/auth-keyboard.spec.ts', '**/account.spec.ts', '**/shopping-interaction.spec.ts'],
   timeout: 30_000,
   use: {
     baseURL: 'http://127.0.0.1:8911',

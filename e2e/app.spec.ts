@@ -9,7 +9,11 @@ test('un plato planificado genera una compra marcada y persiste localmente', asy
 
   await page.getByRole('button', { name: 'Crear primer plato' }).click();
   await page.getByPlaceholder('p. ej. Tortilla de patata').fill('Tortilla de patata');
-  await page.getByPlaceholder('Patatas — 500 g\nHuevos — 4 ud\nCebolla').fill('Patatas — 500 g\nHuevos — 4 ud\nCebolla');
+  await page.getByRole('textbox', { name: 'Ingrediente 1', exact: true }).fill('Patatas — 500 g');
+  await page.getByRole('button', { name: 'Añadir ingrediente' }).click();
+  await page.getByRole('textbox', { name: 'Ingrediente 2', exact: true }).fill('Huevos — 4 ud');
+  await page.getByRole('button', { name: 'Añadir ingrediente' }).click();
+  await page.getByRole('textbox', { name: 'Ingrediente 3', exact: true }).fill('Cebolla');
   await page.getByRole('button', { name: 'Guardar plato' }).click();
   await page.getByText('Semana', { exact: true }).click();
   await page.getByText('Añadir menú', { exact: true }).first().click();
@@ -30,4 +34,9 @@ test('un plato planificado genera una compra marcada y persiste localmente', asy
   await page.reload();
   await page.getByText('Compra', { exact: true }).click();
   await expect(page.getByText('2 de 4 comprados')).toBeVisible();
+  await page.screenshot({ path: 'artifacts/ui/shopping-populated.png' });
+  await page.getByText('Platos', { exact: true }).click();
+  await page.screenshot({ path: 'artifacts/ui/recipes-populated.png' });
+  await page.getByText('Semana', { exact: true }).click();
+  await page.screenshot({ path: 'artifacts/ui/week-populated.png' });
 });
