@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { Ingredient, ManualShoppingItem, PlannedMeal, ShoppingItem } from '../domain/types';
-import { makeId } from '../domain/ids';
+import { makeId, makeInviteCode } from '../domain/ids';
 import { createAsyncBoundary, mergeById } from '../domain/cloudState';
 import { syncPlannedRecipes } from '../domain/recipes';
 import { aggregateShopping, buildManualItem } from '../domain/shopping';
@@ -9,16 +9,13 @@ import { ingredientText, parseIngredients } from '../domain/ingredients';
 import { getMonday } from '../domain/dates';
 import { authErrorText, errorText } from '../lib/errors';
 import {
-  addManualItem, addMeal, addRecipe, cloudEnabled, createHousehold, emptyWeek,
-  joinHousehold, listMyHouseholds, loadLocal, loadWeek, removeManualItem,
-  removeMeal, updateRecipe, updateLocalRecipePlans, saveLocal, setManualChecked, setShoppingChecked, subscribeHouseholdChanges, supabase,
+  addManualItem, addMeal, addRecipe, changePassword, cloudEnabled, createHousehold, deleteMyAccount, emptyWeek,
+  joinHousehold, leaveHousehold, listMyHouseholds, loadLocal, loadWeek, regenerateInviteCode, removeHouseholdMember, removeManualItem,
+  removeMeal, requestPasswordReset, resetPasswordWithCode, updateRecipe, updateLocalRecipePlans, saveLocal, setManualChecked, setShoppingChecked, subscribeHouseholdChanges, supabase,
   type Household, type Recipe, type WeekData,
 } from '../data/cloud';
 
 const ACTIVE_HOUSEHOLD = 'menu-pareja:active-household';
-const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-
-const makeInviteCode = () => Array.from({ length: 8 }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join('');
 
 export type IngredientRow = { id: string; text: string; original?: Ingredient };
 export const emptyIngredientRows = (): IngredientRow[] => [{ id: makeId(), text: '' }];
@@ -150,13 +147,29 @@ function useAppStateValue() {
   useEffect(() => {
     if (!household || !supabase || !userEmail) return;
     const client = supabase;
-    const channel = subscribeHouseholdChanges(client, household.id, () => reload());
+    const channel = subscribeHouseholdChanges(client, household.id, change => {
+      if (change.table === 'household_members') void checkMembership();
+      reload();
+    });
     function reload() {
       const isCurrent = scope.beginRead();
       loadWeek(household!.id, weekStart).then(next => {
         if (!isCurrent()) return;
         setData(next); setDataScope(scope); setLoaded(true); setError('');
       }).catch(e => { if (isCurrent()) setError(errorText(e)); });
+    }
+    // Someone joined or left. If it was us (removed by the owner), move to another household.
+    async function checkMembership() {
+      try {
+        const houses = await listMyHouseholds();
+        if (!scope.active() || houses.some(h => h.id === household!.id)) return;
+        const next = houses[0] ?? null;
+        if (next) await AsyncStorage.setItem(`${ACTIVE_HOUSEHOLD}:${userEmail}`, next.id);
+        else await AsyncStorage.removeItem(`${ACTIVE_HOUSEHOLD}:${userEmail}`);
+        if (!scope.active()) return;
+        setHousehold(next);
+        setNotice(`Ya no formas parte de ${household!.name}.`);
+      } catch { /* The next reload reports connection problems. */ }
     }
     return () => { void client.removeChannel(channel); };
   }, [household, weekStart, userEmail, scope]);
@@ -185,6 +198,30 @@ function useAppStateValue() {
         : '¡Correo de verificación enviado!\n\nEntra en tu correo y verifícalo. No olvides comprobar la carpeta de spam o correo no deseado.');
     } catch (e) { setAuthError(authErrorText(e)); }
     finally { setAuthBusy(false); }
+  }
+
+  // Recuperar la contraseña con el código que llega por correo.
+  async function requestReset(email: string): Promise<boolean> {
+    if (!supabase || authBusy) return false;
+    setAuthBusy(true); setAuthError(''); setAuthNotice('');
+    try {
+      await requestPasswordReset(email);
+      setAuthNotice('Si hay una cuenta con ese correo, te hemos enviado un código. Revisa también Spam.');
+      return true;
+    } catch (e) { setAuthError(authErrorText(e)); return false; }
+    finally { setAuthBusy(false); }
+  }
+
+  async function confirmReset(email: string, code: string, password: string) {
+    if (!supabase || authBusy) return;
+    setAuthBusy(true); setAuthError(''); setAuthNotice('');
+    try {
+      await resetPasswordWithCode(email, code, password);
+    } catch (e) {
+      // A valid code signs in before the new password is saved; never leave that half-done session open.
+      if ((await supabase.auth.getSession()).data.session) await supabase.auth.signOut({ scope: 'local' });
+      setAuthError(authErrorText(e));
+    } finally { setAuthBusy(false); }
   }
 
   async function makeHouse(name: string) {
@@ -351,26 +388,72 @@ function useAppStateValue() {
       // This SDK also removes the local session on a server/network error.
       // Never pretend the user is still authenticated after SIGNED_OUT.
       if (result.error && (await supabase.auth.getSession()).data.session) throw result.error;
-      const logoutWarning = result.error ? `Sesión cerrada en este móvil. No se pudo confirmar la desconexión con el servidor: ${errorText(result.error)}` : '';
-      scope.close();
-      setUserEmail(null); setHousehold(null); setData(emptyWeek()); setDataScope(null);
-      setAccountModal(false); setJoinModal(false); setInviteCode(''); setMealTarget(null); setRecipeModal(false); setManualModal(false);
-      resetForms();
-      setNotice(''); setError(''); setAuthError(logoutWarning); setAuthNotice(''); setBusy(false);
-      setWeekStart(getMonday(new Date()));
-      // Remove only this account's on-device cache, never remote/shared data.
-      try {
-        const keys = await AsyncStorage.getAllKeys();
-        await AsyncStorage.multiRemove(keys.filter(key => key.startsWith(`menu-pareja:account:${userEmail}:`) || key === `${ACTIVE_HOUSEHOLD}:${userEmail}`));
-      } catch { setAuthNotice('Sesión cerrada. No se pudo limpiar la copia local; sigue aislada de otras cuentas.'); }
+      await clearAccountState(result.error ? `Sesión cerrada en este móvil. No se pudo confirmar la desconexión con el servidor: ${errorText(result.error)}` : '', '');
     } catch (e) { setLogoutError(`No se pudo cerrar la sesión. ${errorText(e)}`); }
     finally { setLogoutBusy(false); }
+  }
+
+  // After signing out or deleting the account: reset memory and this account's on-device cache.
+  async function clearAccountState(warning: string, notice: string) {
+    scope.close();
+    setUserEmail(null); setHousehold(null); setData(emptyWeek()); setDataScope(null);
+    setAccountModal(false); setJoinModal(false); setInviteCode(''); setMealTarget(null); setRecipeModal(false); setManualModal(false);
+    resetForms();
+    setNotice(''); setError(''); setAuthError(warning); setAuthNotice(notice); setBusy(false);
+    setWeekStart(getMonday(new Date()));
+    // Remove only this account's on-device cache, never remote/shared data.
+    try {
+      const keys = await AsyncStorage.getAllKeys();
+      await AsyncStorage.multiRemove(keys.filter(key => key.startsWith(`menu-pareja:account:${userEmail}:`) || key === `${ACTIVE_HOUSEHOLD}:${userEmail}`));
+    } catch { setAuthNotice(`${notice ? `${notice} ` : 'Sesión cerrada. '}No se pudo limpiar la copia local; sigue aislada de otras cuentas.`); }
+  }
+
+  // Irreversible. Shared households stay for the other members (see delete_my_account in Supabase).
+  async function deleteAccount() {
+    if (!supabase) return;
+    await deleteMyAccount();
+    await supabase.auth.signOut({ scope: 'local' });
+    await clearAccountState('', 'Tu cuenta y tus datos se han borrado. Las casas compartidas siguen para las demás personas.');
+  }
+
+  // Gestión de la casa. Lanzan el error para que la pantalla lo muestre junto al botón.
+  // Returns the household now shown (null → the create/join screen).
+  async function leaveCurrentHousehold(): Promise<Household | null> {
+    if (!household) return null;
+    const left = household;
+    await leaveHousehold(left.id);
+    let next: Household | null = null;
+    try {
+      next = (await listMyHouseholds())[0] ?? null;
+      const keys = await AsyncStorage.getAllKeys();
+      await AsyncStorage.multiRemove(keys.filter(key => key.startsWith(`menu-pareja:account:${userEmail}:${left.id}:`)));
+      if (next) await AsyncStorage.setItem(`${ACTIVE_HOUSEHOLD}:${userEmail}`, next.id);
+      else await AsyncStorage.removeItem(`${ACTIVE_HOUSEHOLD}:${userEmail}`);
+    } catch { /* Already left: without the list, show the create/join screen. */ }
+    setHousehold(next);
+    setNotice(`Has salido de ${left.name}.`);
+    return next;
+  }
+
+  async function rotateInviteCode() {
+    if (!household) return;
+    const target = household.id;
+    const code = await regenerateInviteCode(target);
+    setHousehold(current => current?.id === target ? { ...current, inviteCode: code } : current);
+  }
+
+  async function removeMember(userId: string) {
+    if (!household) return;
+    const target = household.id;
+    const code = await removeHouseholdMember(target, userId);
+    setHousehold(current => current?.id === target ? { ...current, inviteCode: code } : current);
   }
 
   return {
     // Sesión y casa
     localMode: !cloudEnabled, sessionReady, userEmail, household,
-    authBusy, authError, authNotice, doAuth, makeHouse, enterHouse, signOut, logoutBusy, logoutError, setLogoutError,
+    authBusy, authError, authNotice, doAuth, requestReset, confirmReset, makeHouse, enterHouse, signOut, logoutBusy, logoutError, setLogoutError,
+    deleteAccount, changePassword, leaveCurrentHousehold, rotateInviteCode, removeMember,
     // Semana y datos
     weekStart, setWeekStart, data, loaded, dataCurrent: dataScope === scope,
     busy, error, setError, notice, setNotice,

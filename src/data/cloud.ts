@@ -96,6 +96,62 @@ export async function listMyHouseholds(): Promise<Household[]> {
   return (rows ?? []).map(row => ({ id: row.id, name: row.name, inviteCode: row.invite_code }));
 }
 
+export interface HouseholdMember {
+  userId: string;
+  email: string;
+  isOwner: boolean;
+}
+
+export async function listHouseholdMembers(householdId: string): Promise<HouseholdMember[]> {
+  const { data, error } = await supabase!.rpc('household_members_list', { p_household: householdId });
+  if (error) throw error;
+  return ((data ?? []) as { user_id: string; email: string; is_owner: boolean }[])
+    .map(row => ({ userId: row.user_id, email: row.email, isOwner: row.is_owner }));
+}
+
+// Leaving as the last member deletes the household and its data on the server.
+export async function leaveHousehold(householdId: string): Promise<void> {
+  const { error } = await supabase!.rpc('leave_household', { p_household: householdId });
+  if (error) throw error;
+}
+
+// Returns the new invite code: removing someone rotates it so they cannot rejoin.
+export async function removeHouseholdMember(householdId: string, userId: string): Promise<string> {
+  const { data, error } = await supabase!.rpc('remove_household_member', { p_household: householdId, p_user: userId });
+  if (error) throw error;
+  return data as string;
+}
+
+export async function regenerateInviteCode(householdId: string): Promise<string> {
+  const { data, error } = await supabase!.rpc('regenerate_invite_code', { p_household: householdId });
+  if (error) throw error;
+  return data as string;
+}
+
+// Server-side: leaves every household (keeping shared ones for the others) and deletes the Auth user.
+export async function deleteMyAccount(): Promise<void> {
+  const { error } = await supabase!.rpc('delete_my_account');
+  if (error) throw error;
+}
+
+// The "Reset password" email template must include {{ .Token }} (auth-site/email/recovery.html).
+export async function requestPasswordReset(email: string): Promise<void> {
+  const { error } = await supabase!.auth.resetPasswordForEmail(email.trim());
+  if (error) throw error;
+}
+
+// Verifying the emailed code signs the user in; the new password is saved right after.
+export async function resetPasswordWithCode(email: string, code: string, password: string): Promise<void> {
+  const { error } = await supabase!.auth.verifyOtp({ email: email.trim(), token: code.trim(), type: 'recovery' });
+  if (error) throw error;
+  await changePassword(password);
+}
+
+export async function changePassword(password: string): Promise<void> {
+  const { error } = await supabase!.auth.updateUser({ password });
+  if (error) throw error;
+}
+
 export async function addRecipe(householdId: string, recipe: Omit<Recipe, 'id'>): Promise<Recipe> {
   const { data, error } = await supabase!.from('recipes').insert({ household_id: householdId, ...recipe }).select('id,title,ingredients,note').single();
   if (error) throw error;

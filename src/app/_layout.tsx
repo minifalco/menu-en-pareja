@@ -18,11 +18,12 @@ export default function RootLayout() {
 
 // Qué pantallas se pueden ver: sin sesión → login; con sesión pero sin casa → casa;
 // con casa (o en modo local, sin Supabase) → pestañas. Al cambiar la condición,
-// Expo Router lleva al usuario a la pantalla permitida.
+// Expo Router lleva al usuario a la primera pantalla permitida en este orden,
+// así que las pantallas secundarias (gestionar-casa, cuenta) van al final.
 function RootNavigator() {
   const { sessionReady, userEmail, household } = useAppState();
   if (cloudEnabled && !sessionReady) return <LoadingScreen />;
-  const signedIn = Boolean(userEmail);
+  const signedIn = cloudEnabled && Boolean(userEmail);
   return (
     <Stack screenOptions={{ headerShown: false, animation: 'none' }}>
       <Stack.Protected guard={!cloudEnabled || (signedIn && Boolean(household))}>
@@ -31,8 +32,14 @@ function RootNavigator() {
       <Stack.Protected guard={cloudEnabled && !signedIn}>
         <Stack.Screen name="login" />
       </Stack.Protected>
-      <Stack.Protected guard={cloudEnabled && signedIn && !household}>
+      <Stack.Protected guard={signedIn && !household}>
         <Stack.Screen name="casa" />
+      </Stack.Protected>
+      <Stack.Protected guard={signedIn && Boolean(household)}>
+        <Stack.Screen name="gestionar-casa" />
+      </Stack.Protected>
+      <Stack.Protected guard={signedIn}>
+        <Stack.Screen name="cuenta" />
       </Stack.Protected>
     </Stack>
   );

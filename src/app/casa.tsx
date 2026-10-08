@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React, { useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -17,7 +18,9 @@ export default function HouseholdScreen() {
     <View style={authStyles.card}><View style={styles.segment}><Pressable onPress={() => setMode('create')} style={[styles.segmentPart, mode === 'create' && styles.segmentActive]}><Text style={[styles.segmentText, mode === 'create' && styles.segmentTextActive]}>Crear casa</Text></Pressable><Pressable onPress={() => setMode('join')} style={[styles.segmentPart, mode === 'join' && styles.segmentActive]}><Text style={[styles.segmentText, mode === 'join' && styles.segmentTextActive]}>Unirme</Text></Pressable></View>
       {mode === 'create' ? <><Text style={s.fieldLabel}>NOMBRE DE LA CASA</Text><TextInput value={name} onChangeText={setName} placeholder="Nuestra casa" style={s.input} /><Text style={s.fieldHint}>Después podrás compartir un código para que tu pareja se una.</Text><PrimaryButton label={busy ? 'Creando…' : 'Crear casa compartida'} disabled={busy} onPress={() => app.makeHouse(name)} /></> : <><Text style={s.fieldLabel}>CÓDIGO DE INVITACIÓN</Text><TextInput value={code} onChangeText={setCode} autoCapitalize="characters" placeholder="8 letras o números" style={[s.input, s.codeInput]} maxLength={8} /><Text style={s.fieldHint}>Pídele el código a quien creó la casa.</Text><PrimaryButton label={busy ? 'Uniéndome…' : 'Unirme a la casa'} disabled={busy || code.trim().length < 8} onPress={() => app.enterHouse(code)} /></>}
       {error ? <Text style={s.errorText}>{error}</Text> : null}
+      {app.notice && !error ? <Text accessibilityLiveRegion="polite" style={styles.notice}>{app.notice}</Text> : null}
     </View><Pressable onPress={app.signOut} style={authStyles.modeLink}><Text style={authStyles.modeLinkText}>Cerrar sesión</Text></Pressable>
+    <Pressable accessibilityRole="link" onPress={() => router.push('/cuenta')} style={styles.secondaryLink}><Text style={authStyles.modeLinkText}>Cuenta y privacidad</Text></Pressable>
   </KeyboardForm></KeyboardFrame></SafeAreaView>;
 }
 
@@ -27,4 +30,6 @@ const styles = StyleSheet.create({
   segmentActive: { backgroundColor: C.paper },
   segmentText: { color: C.muted, fontSize: 11, fontWeight: '700' },
   segmentTextActive: { color: C.green },
+  notice: { color: C.green, fontSize: 13, marginTop: 12, lineHeight: 19 },
+  secondaryLink: { alignItems: 'center', paddingBottom: 14 },
 });

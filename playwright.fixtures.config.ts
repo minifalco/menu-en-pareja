@@ -3,7 +3,7 @@ import { defineConfig } from '@playwright/test';
 
 // Supabase simulado con page.route: nunca contacta con un backend real.
 export default defineConfig(base, {
-  testMatch: ['**/auth-keyboard.spec.ts', '**/account.spec.ts', '**/shopping-interaction.spec.ts'],
+  testMatch: ['**/auth-keyboard.spec.ts', '**/account.spec.ts', '**/account-management.spec.ts', '**/shopping-interaction.spec.ts'],
   testIgnore: [],
   use: { ...base.use, baseURL: 'http://127.0.0.1:8922' },
   webServer: {
