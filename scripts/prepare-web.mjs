@@ -8,8 +8,8 @@ html = html.replace('</head>', [
   '  <link rel="apple-touch-icon" href="./icons/icon-192.png">',
   '  <meta name="apple-mobile-web-app-capable" content="yes">',
   '  <meta name="apple-mobile-web-app-status-bar-style" content="default">',
-  '  <meta name="apple-mobile-web-app-title" content="Menú en pareja">',
-  '  <meta name="application-name" content="Menú en pareja">',
+  '  <meta name="apple-mobile-web-app-title" content="iHambre">',
+  '  <meta name="application-name" content="iHambre">',
   '</head>',
 ].join('\n'));
 let basePath = process.env.PAGES_BASE_PATH ?? '';

@@ -1,7 +1,7 @@
 {
   "id": ".",
-  "name": "Menú en pareja",
-  "short_name": "Menú",
+  "name": "iHambre",
+  "short_name": "iHambre",
   "description": "Planificad la semana y compartid la lista de la compra.",
   "lang": "es-ES",
   "start_url": "./",
