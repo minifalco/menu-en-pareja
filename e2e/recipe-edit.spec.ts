@@ -3,6 +3,8 @@ import { expect, test } from '@playwright/test';
 test('tap a saved recipe edits in place, preserves exact quantities and persists without duplicates', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('button', { name: 'Crear primer plato' })).toBeVisible();
+  // The app saves its empty initial state once after loading; seed only after that write.
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('menu-pareja:local:recipes'))).not.toBeNull();
   await page.evaluate(() => {
     localStorage.clear();
     localStorage.setItem('menu-pareja:local:recipes', JSON.stringify([{ id: 'existing-recipe', title: 'Arroz original', note: 'Reposar', ingredients: [{ name: 'Arroz', quantity: 0.125, unit: 'kg' }, { name: 'Sal' }] }]));
