@@ -43,3 +43,12 @@ playwright-report/
 # generated native folders
 /ios
 /android
+
+# Python
+__pycache__/
+
+# Evidencias, capturas y logs generados por agentes y tests (se quedan en local)
+artifacts/
+_archivo/
+auth-site/tests/*.log
+auth-site/tests/*.png
