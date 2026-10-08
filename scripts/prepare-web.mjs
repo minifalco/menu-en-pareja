@@ -19,6 +19,8 @@ if (basePath) {
   html = html.replaceAll('src="/_expo/', `src="${basePath}/_expo/`);
 }
 await writeFile(path, html);
+// GitHub Pages serves 404.html for unknown paths: reloading /compra boots the app and the router shows that tab.
+await writeFile(new URL('../dist/404.html', import.meta.url), html);
 await cp(new URL('../public/manifest.json', import.meta.url), new URL('../dist/manifest.json', import.meta.url));
 await cp(new URL('../public/icons', import.meta.url), new URL('../dist/icons', import.meta.url), { recursive: true });
 await writeFile(new URL('../dist/.nojekyll', import.meta.url), '');
