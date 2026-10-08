@@ -18,10 +18,12 @@ El dueño del proyecto lo dirige pero no es programador profesional.
 
 | Ruta | Qué hay |
 |---|---|
-| `App.tsx` | Hoy: toda la interfaz y el estado (monolito). En migración a Expo Router, ver `docs/plans/` |
-| `src/domain/` | Lógica pura, sin React ni red: fechas, ingredientes, agregación de la compra. Tests en `tests/` |
+| `src/app/` | Pantallas (Expo Router): cada fichero es una ruta. `_layout.tsx` decide qué se puede ver (login → casa → pestañas); `(tabs)/_layout.tsx` es el marco común (cabecera, semana, barra inferior, ventanas emergentes) |
+| `src/state/AppState.tsx` | Estado compartido y acciones (sesión, casa, semana, recetas, compra). Las pantallas lo leen con `useAppState()`. Contiene protecciones contra respuestas de red desordenadas (`createAsyncBoundary`): no las quites |
+| `src/components/` | Piezas de interfaz; `modals/` tiene una ventana emergente por fichero |
+| `src/domain/` | Lógica pura, sin React ni red: fechas, formato, ingredientes, agregación de la compra. Tests en `tests/` |
 | `src/data/` | Acceso a Supabase, caché local (`cloud.ts`) y realtime |
-| `src/components/` | Piezas de interfaz reutilizables |
+| `src/theme.ts` | Colores y estilos compartidos; los estilos propios de una pantalla van en su fichero |
 | `supabase/` | Esquema de base de datos y migraciones |
 | `e2e/` | Tests de navegador (Playwright) |
 | `auth-site/` | Web estática de ihambre.top (confirmación de correo) |
@@ -36,6 +38,7 @@ El proyecto usa npm (`package-lock.json`).
 npm run check               # typecheck + lint + tests unitarios (rápido; siempre)
 npm run e2e                 # tests de navegador en modo local, sin nube
 npm run e2e:fixtures        # tests de navegador con Supabase simulado
+npm run e2e:export          # exporta la web y repite los tests locales sobre ella
 npm run web                 # arrancar la app en el navegador
 npx expo install <paquete>  # SIEMPRE en vez de npm install <paquete>: elige versiones compatibles con el SDK
 npx expo-doctor             # diagnosticar dependencias y configuración
@@ -52,7 +55,7 @@ npx expo-doctor             # diagnosticar dependencias y configuración
 ## Cómo se trabaja
 
 - **Una tarea = un plan + una rama.** El plan vive en `docs/plans/AAAA-MM-DD-nombre.md` (formato en `docs/plans/README.md`). Marca sus casillas según avances: si te quedas sin contexto o te releva otro agente, se continúa desde el plan.
-- **Nunca hagas push a `main`.** Un push a `main` publica la web (GitHub Pages). El dueño decide cuándo se junta una rama.
+- **Nunca hagas push a `main` ni a `gh-pages`.** `main` es lo aprobado; `gh-pages` es la web pública (ihambre.top). El dueño decide cuándo se junta una rama y cuándo se publica.
 - **Revisión cruzada:** al acabar, otro modelo revisa la rama (subagente `revisor` o `/review` de Codex) antes de juntarla.
 - **Nada de evidencias en el repo.** Capturas, logs e informes de verificación van a `artifacts/` (ignorado). La prueba de que algo funciona son los tests.
 - **El repositorio es público.** Nunca escribas claves, contraseñas ni datos personales en ficheros.
@@ -74,6 +77,7 @@ Expo rompe APIs en cada versión del SDK. Antes de escribir código que toque Ex
 - `ios/` y `android/` se generan (Continuous Native Generation) y están ignorados: no los edites; configura en `app.json` y plugins.
 - Tras añadir una librería con código nativo hay que recompilar la app (development build): `npx expo run:android` o `npx eas-cli@latest build --profile development`.
 - Prefiere módulos oficiales de Expo antes que librerías de terceros.
+- `npx expo lint` solo revisa `src/`, `app/` y `components/`: el código de la app va siempre dentro de `src/`.
 
 ## Ahorra tokens
 
