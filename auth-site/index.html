@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <script>
+    (() => {
+      // Reduce the callback to non-sensitive flags, then discard its URL.
+      const failed = [location.hash.slice(1), location.search.slice(1)].some(part => {
+        const parameters = new URLSearchParams(part);
+        return parameters.has('error') || parameters.has('error_description') || parameters.has('error_code');
+      });
+      const confirmed = (() => {
+        const parameters = new URLSearchParams(location.hash.slice(1));
+        return Boolean(parameters.get('access_token')) && parameters.get('type') === 'signup';
+      })();
+      if (location.hash || location.search) history.replaceState(null, '', location.pathname);
+      document.addEventListener('DOMContentLoaded', () => {
+        if (failed) {
+          document.querySelector('h1').textContent = 'No se pudo confirmar el correo';
+          document.querySelector('#message').textContent = 'El enlace puede haber caducado o no ser válido. Vuelve a iHambre y solicita un nuevo correo de confirmación.';
+        } else if (confirmed) {
+          document.querySelector('h1').textContent = '¡Cuenta activada!';
+          document.querySelector('#message').textContent = 'Vuelve a la aplicación iHambre y empieza a disfrutar de una vida sana organizada con tu pareja o amigos.';
+        }
+      }, { once: true });
+    })();
+  </script>
+  <title>iHambre · Confirmación de correo</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <main aria-labelledby="heading">
+    <img class="logo" src="./logo.png" alt="iHambre: compra y alimentación saludable" width="112" height="112">
+    <p class="brand">iHambre</p>
+    <span class="divider" aria-hidden="true"></span>
+    <h1 id="heading">Te damos la bienvenida</h1>
+    <p id="message" role="status" aria-live="polite">Abre el enlace de tu correo para confirmar tu cuenta de iHambre.</p>
+    <p class="note">Tu menú empieza aquí.</p>
+  </main>
+</body>
+</html>
