@@ -24,7 +24,7 @@ Guía para el dueño del proyecto. Las reglas que siguen los agentes están en `
    - O en Claude Code: "usa el subagente revisor".
    Pásale al implementador lo que salga y que lo corrija.
 5. **Prueba tú.** Mira que la CI esté en verde (GitHub → pestaña *Actions*) y prueba la app (ver abajo).
-6. **Junta la rama.** Cuando estés conforme, pide: "junta la rama X en main". Recuerda: **juntar en `main` publica la web**.
+6. **Junta la rama.** Cuando estés conforme, pide: "junta la rama X en main". Juntar no publica nada: publicar la web (ver README) o una versión de la app en las tiendas es un paso aparte que decides tú.
 
 **Relevo entre agentes.** Si a Claude se le acaba la cuota a mitad de tarea, abre Codex y escribe:
 > Continúa el plan docs/plans/<fichero>.md en la rama <rama>. Lee AGENTS.md primero.

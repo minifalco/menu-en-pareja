@@ -15,7 +15,7 @@ Guardar en git todo el trabajo acumulado (solo había 2 commits) sin meter basur
 - [x] Subir a la rama `orden-repo`, no a `main`.
 
 ## Riesgos
-- Un push a `main` publica la web automáticamente → se subió a una rama.
+- Un push a `main` publica la web automáticamente → se subió a una rama. *(Corrección posterior: ese despliegue automático estaba roto y podía sustituir la página de confirmación de ihambre.top; se retiró en la rama `expo-router`. La web se sirve de la rama `gh-pages`.)*
 - La configuración global de git apuntaba a un `gh` temporal de Hermes que ya no existía → se subió con un ajuste puntual. Arreglo permanente: ejecutar `gh auth setup-git`.
 
 ## Cómo comprobarlo

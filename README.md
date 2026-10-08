@@ -59,6 +59,16 @@ Dos opciones:
 - **PWA:** `npm run export:web`, publicar `dist/` en HTTPS y en Safari usar Compartir → Añadir a pantalla de inicio.
 - **App nativa:** se compila en la nube con EAS (`npx eas-cli@latest build --platform ios`); no hace falta Mac, pero sí una cuenta de Apple Developer.
 
-## Web
+## Web (ihambre.top)
 
-Cada push a `main` ejecuta los tests y publica la PWA en GitHub Pages (`.github/workflows/pages.yml`). La página de confirmación de correo de `ihambre.top` está en `auth-site/`.
+Cada push a cualquier rama ejecuta los tests en GitHub Actions (`.github/workflows/ci.yml`); no se publica nada automáticamente.
+
+`ihambre.top` se sirve con GitHub Pages desde la rama `gh-pages`:
+
+| Ruta | Contenido |
+|---|---|
+| `/` | Página de confirmación de correo: `index.html`, `styles.css` y `logo.png` de `auth-site/`, más `CNAME` y `.nojekyll` |
+| `/app/` | La app web (PWA) |
+| `/404.html` | Copia de la app, para que recargar una pestaña (`/app/compra`) funcione |
+
+Publicar es manual: con el `.env` de producción, `PAGES_BASE_PATH=/app npm run export:web`; después copiar `dist/` a `app/` y `dist/404.html` a la raíz de la rama `gh-pages`. Para probar el resultado en local: `node scripts/serve-dist.mjs 8945 /app` y abrir `http://127.0.0.1:8945/app/`.
